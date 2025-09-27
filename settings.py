@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class MySettings(BaseModel):
-    tool_name: str = "Analisi normative"
+    tool_name: str = "Approfondisci documentazione"
 
 @plugin
 def settings_schema():
