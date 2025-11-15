@@ -62,16 +62,16 @@ def before_cat_reads_message(user_message_json, cat):
           .get("user_id_tool_status", {})
           .get(uid, False)
     )
-    cat.send_ws_message(f"Tool {tool_key} enabled for user {uid}","chat")
+    # cat.send_ws_message(f"Tool {tool_key} enabled for user {uid}","chat")
     if not enabled:
-        cat.send_ws_message(f"Tool {tool_key} not enabled for user {uid}","chat")
+        # cat.send_ws_message(f"Tool {tool_key} not enabled for user {uid}","chat")
         return user_message_json
 
     # Prompt di pianificazione che verrà aggiunto a tutte le richieste
     planning_phase_prompt = """\n- Utilizza il tool 'declarative_search' fintanto che non avrai tutte le informazioni per una risposta chiara e esaustiva."""
 
     user_message_json["text"] = user_message_json["text"] + planning_phase_prompt
-    return user_message_js
+    return user_message_json
 
 @tool(return_direct=False)
 def declarative_search(question: str, cat):
@@ -186,5 +186,6 @@ def declarative_search(question: str, cat):
     # # cat.send_ws_message(deepsearch_return)
     # # Se dopo la dedup non resta nulla, restituisci stringa vuota
     # return deepsearch_return
+
 
 
