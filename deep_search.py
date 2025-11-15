@@ -39,6 +39,40 @@ def _get_metadata_filter(user: str) -> Dict[str, bool]:
     log.info(f'[deep_search] metadata filter for user {user}: {metadata}')
     return metadata
 
+@hook  # default priority = 1 
+def before_cat_reads_message(user_message_json, cat):
+    """
+    Hook che aggiunge un prompt di pianificazione a tutti i messaggi quando il tool è abilitato.
+    Questo garantisce che la prima azione dell'agente sia sempre la pianificazione.
+    """
+    settings = cat.mad_hatter.get_plugin().load_settings()
+    tool_key = settings["tool_name"]    
+    
+    # ---- Guard: abilita/disabilita tool per utente; fallback=False ----
+    try:
+        with open("cat/static/tools_status.json", "r", encoding="utf-8") as f:
+            ts = json.load(f) or {}
+    except Exception:
+        ts = {}
+
+    uid = str(getattr(cat, "user_id", "") or "")
+    enabled = bool(
+        ts.get("tools", {})
+          .get(tool_key, {})
+          .get("user_id_tool_status", {})
+          .get(uid, False)
+    )
+    cat.send_ws_message(f"Tool {tool_key} enabled for user {uid}","chat")
+    if not enabled:
+        cat.send_ws_message(f"Tool {tool_key} not enabled for user {uid}","chat")
+        return user_message_json
+
+    # Prompt di pianificazione che verrà aggiunto a tutte le richieste
+    planning_phase_prompt = """\n- Utilizza il tool deep_search fintanto che non avrai tutte le informazioni per una risposta chiara e esaustiva."""
+
+    user_message_json["text"] = user_message_json["text"] + planning_phase_prompt
+    return user_message_js
+
 @tool(return_direct=False)
 def declarative_search(question: str, cat):
     """
@@ -152,3 +186,4 @@ def declarative_search(question: str, cat):
     # # cat.send_ws_message(deepsearch_return)
     # # Se dopo la dedup non resta nulla, restituisci stringa vuota
     # return deepsearch_return
+
